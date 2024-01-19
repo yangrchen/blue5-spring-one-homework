@@ -31,10 +31,11 @@ sig_vars
 result_all_sig <- list()
 
 for (i in 1:nrow(sig_vars)) {
+    var <- sig_vars$Char[i]
     if (str_split(sig_vars$Process[i], " ")[[1]][1] == "Factor") {
-        result <- smbinning.factor(df = train, y = "GB", x = sig_vars$Char[i])
+        result <- smbinning.factor(df = train, y = "GB", x = var)
     } else {
-        result <- smbinning(df = train, y = "GB", x = sig_vars$Char[i])
+        result <- smbinning(df = train, y = "GB", x = var)
     }
     result_all_sig[[var]] <- result
 }
