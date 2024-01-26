@@ -1,0 +1,157 @@
+---
+title: "gurobi"
+output: html_document
+date: "2024-01-08"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(smbinning)
+library(gmodels)
+library(vcd)
+library(dplyr)
+
+```
+
+```{r}
+#reading in the dataset and getting all of the varaiables correct
+whole <- read_csv("Data (2)/Data/Homework1_FA/accepted_customers.csv")
+whole <- as.data.frame(whole)
+whole <- whole %>% mutate(GB = ifelse(GB == 1, 0, 1))
+
+whole$CHILDREN <- as.factor(whole$CHILDREN)
+whole$PERS_H <- as.integer(whole$PERS_H)
+whole$AGE <- as.integer(whole$AGE)
+whole$TMADD <- as.integer(whole$TMADD)
+whole$TMJOB1 <- as.integer(whole$TMJOB1)
+whole$TEL <- as.factor(whole$TEL)
+whole$NMBLOAN <- as.factor(whole$NMBLOAN)
+whole$FINLOAN <- as.factor(whole$FINLOAN)
+whole$INCOME <- as.integer(whole$INCOME)
+whole$EC_CARD <- as.factor(whole$EC_CARD)
+whole$BUREAU <- as.factor(whole$BUREAU)
+whole$LOCATION <- as.factor(whole$LOCATION)
+whole$LOANS <- as.integer(whole$LOANS)
+whole$REGN <- as.factor(whole$REGN)
+whole$DIV <- as.factor(whole$DIV)
+whole$CASH <- as.integer(whole$CASH)
+whole$PRODUCT <- as.factor(whole$PRODUCT)
+whole$RESID <- as.factor(whole$RESID)
+whole$NAT <- as.factor(whole$NAT)
+whole$PROF <- as.factor(whole$PROF)
+whole$CAR <- as.factor(whole$CAR)
+whole$CARDS <- as.factor(whole$CARDS)
+whole$GB <- as.integer(whole$GB)
+whole$freq <- as.numeric(whole$`_freq_`)
+whole <- whole[c(-24)]
+head(whole)
+```
+
+```{r}
+set.seed(12345)
+train_id <- sample(seq_len(nrow(whole)), size = floor(0.70*nrow(whole)))
+
+train <- whole[train_id, ]
+test <- whole[-train_id, ]
+```
+
+```{r}
+result <- smbinning(df = train, y = "GB", x = "INCOME")
+result$ivtable
+
+```
+```{r}
+iv_summary <- smbinning.sumiv(df = train, y = "GB")
+smbinning.sumiv.plot(iv_summary)
+```
+
+```{r}
+num_names <- names(train)[sapply(train, is.numeric)] # Gathering the names of numeric variables in data #
+
+result_all <- list() 
+
+for(i in 1:length(num_names)){
+  result_all[[num_names[i]]] <- smbinning(df = train, y = "GB", x = num_names[i])
+}
+
+```
+
+```{r}
+train <- smbinning.gen(df = train, ivout=result_all$AGE, chrname = "AGE_bin")
+train <- smbinning.gen(df = train, ivout=result_all$INCOME, chrname = "INCOME_bin")
+train <- smbinning.gen(df = train, ivout=result_all$TMJOB1, chrname = "TMJOB1_bin")
+train <- smbinning.gen(df = train, ivout=result_all$PERS_H, chrname = "PERS_H_bin")
+train <- smbinning.factor.gen(df = train, ivout=smbinning.factor(df = train, y = "GB", x = "CARDS"), chrname = "CARDS_bin")
+
+```
+
+```{r}
+initial_model <- glm(data = train, GB ~  PERS_H_bin +
+                           AGE_bin + 
+                           TMJOB1_bin +
+                           INCOME_bin +
+                          CARDS_bin, 
+                         weights = train$freq, family = "binomial")
+
+summary(initial_model)
+
+```
+```{r}
+train <- train %>%
+  mutate(pred = initial_model$fitted.values)
+
+
+```
+
+
+```{r}
+smbinning.metrics(dataset = train, prediction = "pred",
+ actualclass = "GB", report = 1)
+smbinning.metrics(dataset = train, prediction = "pred",
+ actualclass = "GB", plot = "ks")
+smbinning.metrics(dataset = train, prediction = "pred",
+ actualclass = "GB", plot = "auc")
+```
+```{r}
+bin_model <- smbinning.scaling(initial_model, pdo = 50, score = 500, odds = 20)
+train_bin <- smbinning.scoring.gen(bin_model, dataset = train)
+train_bin %>% head()
+```
+```{r}
+#
+#525 is the number of people at most we can reject to maintain 75%
+
+table(train_bin$Score)
+1 + 59 + 6 + 87 + 75 + 1 + 7 + 14+ 121 + 44 + 23 + 11 + 46 + 27
+
+#486 cut off would give us 75% acceptance
+
+train_bin %>%
+  filter(Score >= 486)%>%
+  summarise(weighted.mean(GB, freq))
+1-.9759943
+
+
+
+```
+```{r}
+```
+```{r}
+test <- smbinning.gen(df = test, ivout=result_all$AGE, chrname = "AGE_bin")
+test <- smbinning.gen(df = test, ivout=result_all$INCOME, chrname = "INCOME_bin")
+test <- smbinning.gen(df = test, ivout=result_all$TMJOB1, chrname = "TMJOB1_bin")
+test <- smbinning.gen(df = test, ivout=result_all$PERS_H, chrname = "PERS_H_bin")
+```
+
+```{r}
+test <- smbinning.factor.gen(df = test, ivout=smbinning.factor(df = train, y = "GB", 
+                                                               x = "CARDS"), 
+                             chrname = "CARDS_bin")
+```
+
+```{r}
+test_bin <- smbinning.scoring.gen(bin_model, dataset = test)
+head(test_bin)
+```
+
