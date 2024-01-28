@@ -131,7 +131,6 @@ accepts_scored <- rbind(train, test)
 # reading in the rejects dataset and getting all of the varaiables correct
 rejects <- read.csv("rejected_customers.csv")
 rejects <- as.data.frame(rejects)
-rejects <- rejects %>% mutate(GB = ifelse(GB == 1, 0, 1))
 
 set.seed(1234)
 train_id <- sample(seq_len(nrow(rejects)), size = 1000)
