@@ -327,11 +327,11 @@ score <- NULL
 
 cost <- 52000
 profit <- 2000
-for (i in min(floor(train_comb$Score)):max(floor(train_comb$Score))) {
-    score[i - min(floor(train_comb$Score)) + 1] <- i
-    def[i - min(floor(train_comb$Score)) + 1] <- 100 * sum(train_comb$bad[which(train_comb$Score >= i)]) / (length(train_comb$bad[which(train_comb$Score >= i & train_comb$bad == 1)]) + 30 * length(train_comb$bad[which(train_comb$Score >= i & train_comb$bad == 0)]))
-    acc[i - min(floor(train_comb$Score)) + 1] <- 100 * (length(train_comb$bad[which(train_comb$Score >= i & train_comb$bad == 1)]) + 30 * length(train_comb$bad[which(train_comb$Score >= i & train_comb$bad == 0)])) / (length(train_comb$bad[which(train_comb$bad == 1)]) + 30 * length(train_comb$bad[which(train_comb$bad == 0)]))
-    prof[i - min(floor(train_comb$Score)) + 1] <- length(train_comb$bad[which(train_comb$Score >= i & train_comb$bad == 1)]) * (-cost) + 30 * length(train_comb$bad[which(train_comb$Score >= i & train_comb$bad == 0)]) * profit
+for (i in min(floor(accepts_scored_comb$Score)):max(floor(accepts_scored_comb$Score))) {
+    score[i - min(floor(accepts_scored_comb$Score)) + 1] <- i
+    def[i - min(floor(accepts_scored_comb$Score)) + 1] <- 100 * sum(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i)]) / (length(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i & accepts_scored_comb$bad == 1)]) + 30 * length(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i & accepts_scored_comb$bad == 0)]))
+    acc[i - min(floor(accepts_scored_comb$Score)) + 1] <- 100 * (length(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i & accepts_scored_comb$bad == 1)]) + 30 * length(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i & accepts_scored_comb$bad == 0)])) / (length(accepts_scored_comb$bad[which(accepts_scored_comb$bad == 1)]) + 30 * length(accepts_scored_comb$bad[which(accepts_scored_comb$bad == 0)]))
+    prof[i - min(floor(accepts_scored_comb$Score)) + 1] <- length(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i & accepts_scored_comb$bad == 1)]) * (-cost) + 30 * length(accepts_scored_comb$bad[which(accepts_scored_comb$Score >= i & accepts_scored_comb$bad == 0)]) * profit
 }
 
 plot_data <- data.frame(def, acc, prof, score)
