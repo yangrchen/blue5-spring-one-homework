@@ -1,0 +1,82 @@
+---
+title: "simulation hw"
+output: html_document
+date: "2024-02-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+install.packages('triangle')
+library(triangle)
+```
+
+```{r}
+setwd('C:/Users/Samuel/Documents/Homework1_SR')
+```
+```{r}
+
+cost <- read.csv("Homework1_SR/cost.csv")
+
+```
+
+```{r}
+cost
+```
+
+```{r}
+hist(cost$average.return, main='Historical Drilling Cost', xlab='Annual Return')
+```
+```{r}
+Density.cost <- density(cost$average.return)
+Density.cost
+sd(cost$average.return)
+mean(cost$average.return)
+tail(cost$average.cost)
+```
+
+```{r}
+set.seed(1234)
+Est.cost <- rkde(fhat=kde(cost$average.return, h=0.04207), n=1000)
+hist(Est.cost, breaks=50, main='KDE of Historical Cost',
+xlab='Drilling Annual Costs')
+```
+
+```{r}
+p100 <- rep(0,1000)
+set.seed(1234)
+for (i in 1:1000){
+ p100[i] <- rtriangle(a=.02, b=.06, c=.06)
+}
+summary(p100)
+```
+
+```{r}
+
+P2024 <- rep(0,10000)
+
+for(i in 1:10000){
+P0 <- 2279.8
+r <- rnorm(n=1, mean= 0.1239563, sd=0.1242374)
+
+Pt <- P0*(1 + r)
+
+for(j in 1:5){
+r <- rnorm(n=1, mean= 0.1239563, sd=0.1242374)
+Pt <- Pt*(1+r)
+}
+
+for(j in 1:3){
+  r <- rtriangle(a=-.22, b=-.07, c=-.07)
+  Pt <- Pt*(1+r)
+}
+
+for(j in 1:9){
+  r <- rtriangle(a=.02, b=.06, c=.06)
+  Pt <- Pt*(1+r)
+}
+P2024[i] <- Pt
+}
+hist(P2024, breaks=50, main='2024 projected cost',
+xlab='Final Value')
+```
+
