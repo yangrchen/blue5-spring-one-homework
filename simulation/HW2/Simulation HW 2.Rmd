@@ -55,12 +55,12 @@ head(final.dist.r)
 
 ```{r}
 #This takes like 6min to run (not ideal), but it gives you 15 years of decrease rates which will be used to calc oil amounts
-new_frame <-matrix(data=NA, nrow=100000, ncol= 16)
+new_frame <-matrix(data=NA, nrow=100000, ncol= 17)
 for (x in 1:100000){
   new_frame[x,1] <- final.dist.r[x,1]
   new_frame[x,2] <-final.dist.r[x,2]
 
-for (i in 1:14){
+for (i in 1:15){
   index = i + 1
   index_2 = i + 2
   year_begin <- new_frame[x,index]
@@ -72,7 +72,7 @@ head(new_frame)
 ```
 
 ```{r}
-#getting price projections
+#getting price projections (YOU WILL NEED TO READ IN THE CSV: i removed the first rows)
 get_pp <- function(){
 pp = rep(0, nrow(projection))
 for (i in 1:nrow(projection)){
