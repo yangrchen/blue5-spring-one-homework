@@ -65,7 +65,7 @@ for (i in 1:15){
   index_2 = i + 2
   year_begin <- new_frame[x,index]
   year_end <- new_frame[x,index]*(1-new_frame[1])
-  new_frame[,index_2] = year_end
+  new_frame[x,index_2] = year_end
 }
 }
 head(new_frame)
