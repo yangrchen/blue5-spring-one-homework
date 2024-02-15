@@ -10,9 +10,17 @@ library(triangle)
 ```
 
 ```{r}
+#Set the simulation size and seed
+sim_size = 100000
+seed = 1234
+```
+
+
+```{r}
 #Add to additional cost of a wet well
-costs <- rep (0, 100000)
-for (i in 1:100000){
+set.seed(seed)
+costs <- rep (0, sim_size)
+for (i in 1:sim_size){
 lease <- rnorm(n= 1, mean = 600, sd = 50)
 siesmic <- rnorm(n = 1, mean = 3,sd = .35)
 completion <- rnorm(n=1, mean = 390000, sd = 50000)
@@ -25,7 +33,7 @@ hist(costs, 100)
 
 ```{r}
 #This is creating 100,000 initial oil rates and the decrease rate for a particular well
-set.seed(123)
+set.seed(seed)
 cor_mat <- matrix(c(1, 0.64, 0.64, 1), nrow = 2, byrow = T)
 U <- t(chol(cor_mat))
 
@@ -38,9 +46,9 @@ x.old = (x.std * sd(x)) + mean(x)
 return(x.old)
 }
 
-initial <- rlnorm(n = 100000, meanlog = 6, sdlog = .28)
+initial <- rlnorm(n = sim_size, meanlog = 6, sdlog = .28)
 
-dr <- runif(n =100000, min = .15, max = .32)
+dr <- runif(n =sim_size, min = .15, max = .32)
 
 old_random <- as.matrix(data.frame(standardize(dr), standardize(initial)))
 
@@ -55,8 +63,8 @@ head(final.dist.r)
 
 ```{r}
 #This takes like 6min to run (not ideal), but it gives you 15 years of decrease rates which will be used to calc oil amounts
-new_frame <-matrix(data=NA, nrow=100000, ncol= 17)
-for (x in 1:100000){
+new_frame <-matrix(data=NA, nrow=sim_size, ncol= 17)
+for (x in 1:sim_size){
   new_frame[x,1] <- final.dist.r[x,1]
   new_frame[x,2] <-final.dist.r[x,2]
 
@@ -72,10 +80,20 @@ head(new_frame)
 ```
 
 ```{r}
-#getting price projections (YOU WILL NEED TO READ IN THE CSV: i removed the first rows)
+oil_amounts <- matrix(data = NA, nrow = sim_size, ncol=15)
+for (x in 1:sim_size){
+  for(i in 1:15){
+    oil_amounts[x,i] = 365 * ((new_frame[x,i+1] + new_frame[x,i+2])/2)
+  }
+}
+head(oil_amounts)
+```
+
+```{r}
+#getting price projections
 get_pp <- function(){
-pp = rep(0, nrow(projection))
-for (i in 1:nrow(projection)){
+pp = rep(0, 15)
+for (i in 1:15){
   pp[i] = rtriangle(a = as.numeric(projection[i,3]), b= as.numeric(projection[i,2]), c=as.numeric(projection[i,4]))
 }
 return(pp)
@@ -95,9 +113,62 @@ get_OC <- function(){
   OC <- rnorm(n=1, mean= 2.25, sd = .30)
   return(OC)
 }
+
+# Tax of 4.6%
 ```
 
 ```{r}
+#Costs from HW 1
+set.seed(seed)
+P2024.norm <- rep(0,sim_size)
+
+for(i in 1:sim_size){
+P0 <- 2279.8
+r <- rnorm(n=1, mean= 0.1314875, sd=0.1784348)
+
+Pt <- P0*(1 + r)
+
+for(j in 1:5){
+r <- rnorm(n=1, mean= 0.1314875, sd=0.1784348)
+Pt <- Pt*(1+r)
+}
+
+for(j in 1:3){
+  r <- rtriangle(a=-.22, b=-.07, c=-.0917)
+  Pt <- Pt*(1+r)
+}
+
+for(j in 1:9){
+  r <- rtriangle(a=.02, b=.06, c=.05)
+  Pt <- Pt*(1+r)
+}
+P2024.norm[i] <- Pt
+}
+```
+
+
+```{r}
+# initial_cost = P2024.norm + costs
+initial_cost = P2024.norm + costs
+
+# FNR = ((amt_oil * oil_price) * NRI *(1- .046)) - (OC * amt_oil)
+set.seed(seed)
+FNR <- matrix(data = NA, nrow = sim_size, ncol=15)
+for (x in 1:sim_size){
+  pp <- get_pp()
+  NRI <- get_NRI()
+  for (i in 1:15){
+    OC <- get_OC()
+    fnr = ((oil_amounts[x,i] * pp[i]) * NRI * (1-.046))-(OC * oil_amounts[x,i])
+    FNR[x,i] <- fnr/((1 +.1)^i)
+  }
+}
+
 # NPV = -(initial_cost) + (FNR/(1 + .1)) + ... + 
+NPV <- (-1 * initial_cost) + rowSums(FNR)
+
+hist(NPV,100)
+mean(NPV)
+quantile(NPV, c(.05, .95))
 ```
 
