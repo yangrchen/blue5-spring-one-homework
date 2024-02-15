@@ -1,0 +1,103 @@
+---
+title: "Simulation HW 2"
+output: html_document
+date: "2024-02-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(triangle)
+```
+
+```{r}
+#Add to additional cost of a wet well
+costs <- rep (0, 100000)
+for (i in 1:100000){
+lease <- rnorm(n= 1, mean = 600, sd = 50)
+siesmic <- rnorm(n = 1, mean = 3,sd = .35)
+completion <- rnorm(n=1, mean = 390000, sd = 50000)
+overhead <- rtriangle(a = 172000, b = 279500, c = 215000)
+cost = (lease * 960) + (siesmic * 43000) + completion + overhead
+costs[i] <- cost
+}
+hist(costs, 100)
+```
+
+```{r}
+#This is creating 100,000 initial oil rates and the decrease rate for a particular well
+set.seed(123)
+cor_mat <- matrix(c(1, 0.64, 0.64, 1), nrow = 2, byrow = T)
+U <- t(chol(cor_mat))
+
+standardize <- function(x){
+x.std = (x - mean(x))/sd(x)
+return(x.std)
+}
+destandardize <- function(x.std, x){
+x.old = (x.std * sd(x)) + mean(x)
+return(x.old)
+}
+
+initial <- rlnorm(n = 100000, meanlog = 6, sdlog = .28)
+
+dr <- runif(n =100000, min = .15, max = .32)
+
+old_random <- as.matrix(data.frame(standardize(dr), standardize(initial)))
+
+new_random <- U %*% t(old_random)
+
+new_random <- t(new_random)
+
+final.dist.r <- cbind(destandardize(new_random[,2], dr),destandardize(new_random[,1], initial))
+
+head(final.dist.r)
+```
+
+```{r}
+#This takes like 6min to run (not ideal), but it gives you 15 years of decrease rates which will be used to calc oil amounts
+new_frame <-matrix(data=NA, nrow=100000, ncol= 16)
+for (x in 1:100000){
+  new_frame[x,1] <- final.dist.r[x,1]
+  new_frame[x,2] <-final.dist.r[x,2]
+
+for (i in 1:14){
+  index = i + 1
+  index_2 = i + 2
+  year_begin <- new_frame[x,index]
+  year_end <- new_frame[x,index]*(1-new_frame[1])
+  new_frame[,index_2] = year_end
+}
+}
+head(new_frame)
+```
+
+```{r}
+#getting price projections
+get_pp <- function(){
+pp = rep(0, nrow(projection))
+for (i in 1:nrow(projection)){
+  pp[i] = rtriangle(a = as.numeric(projection[i,3]), b= as.numeric(projection[i,2]), c=as.numeric(projection[i,4]))
+}
+return(pp)
+}
+
+get_pp()
+
+#oil price * amount of oil * THIS RATE = take home
+
+get_NRI <- function(){
+  NRI = rnorm(n=1, mean=.75, sd = .02)
+  return(NRI)
+}
+
+#Oil expenses
+get_OC <- function(){
+  OC <- rnorm(n=1, mean= 2.25, sd = .30)
+  return(OC)
+}
+```
+
+```{r}
+# NPV = -(initial_cost) + (FNR/(1 + .1)) + ... + 
+```
+
