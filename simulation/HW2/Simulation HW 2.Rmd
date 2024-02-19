@@ -142,7 +142,7 @@ for(j in 1:9){
   r <- rtriangle(a=.02, b=.06, c=.05)
   Pt <- Pt*(1+r)
 }
-P2024.norm[i] <- Pt
+P2024.norm[i] <- Pt * 1000
 }
 ```
 
