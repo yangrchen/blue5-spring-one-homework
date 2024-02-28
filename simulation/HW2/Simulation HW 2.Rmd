@@ -14,7 +14,19 @@ library(triangle)
 sim_size = 100000
 seed = 1234
 ```
-
+```{r}
+#Distribution of dry well costs
+set.seed(seed)
+costs.dry <- rep (0, sim_size)
+for (i in 1:sim_size){
+lease <- rnorm(n= 1, mean = 600, sd = 50)
+siesmic <- rnorm(n = 1, mean = 3,sd = .35)
+overhead <- rtriangle(a = 172000, b = 279500, c = 215000)
+cost = (lease * 960) + (siesmic * 43000) + overhead
+costs.dry[i] <- cost
+}
+hist(costs.dry, 100)
+```
 
 ```{r}
 #Add to additional cost of a wet well
@@ -57,8 +69,6 @@ new_random <- U %*% t(old_random)
 new_random <- t(new_random)
 
 final.dist.r <- cbind(destandardize(new_random[,2], dr),destandardize(new_random[,1], initial))
-
-head(final.dist.r)
 ```
 
 ```{r}
@@ -76,7 +86,6 @@ for (i in 1:15){
   new_frame[x,index_2] = year_end
 }
 }
-head(new_frame)
 ```
 
 ```{r}
@@ -86,7 +95,6 @@ for (x in 1:sim_size){
     oil_amounts[x,i] = 365 * ((new_frame[x,i+1] + new_frame[x,i+2])/2)
   }
 }
-head(oil_amounts)
 ```
 
 ```{r}
@@ -98,8 +106,6 @@ for (i in 1:15){
 }
 return(pp)
 }
-
-get_pp()
 
 #oil price * amount of oil * THIS RATE = take home
 
@@ -142,7 +148,7 @@ for(j in 1:9){
   r <- rtriangle(a=.02, b=.06, c=.05)
   Pt <- Pt*(1+r)
 }
-P2024.norm[i] <- Pt
+P2024.norm[i] <- Pt * 1000
 }
 ```
 
